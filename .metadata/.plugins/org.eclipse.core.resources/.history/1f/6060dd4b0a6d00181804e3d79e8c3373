@@ -1,0 +1,59 @@
+package com.mytest.sample;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+
+import com.mytest.domain.Address;
+import com.mytest.domain.EmploymentStatus;
+import com.mytest.domain.Participant;
+
+public class ReadFromExcel {
+	
+	Participant participant = new Participant();
+	Address address = new Address();
+	EmploymentStatus employmentStatus= new EmploymentStatus();
+
+	public void readData() throws EncryptedDocumentException, InvalidFormatException, IOException {
+		String FILE_PATH = "S:\\DevSpace\\Test_Data\\personData.xlsx";
+		Workbook workbook = WorkbookFactory.create(new File(FILE_PATH));
+		System.out.println(workbook.getNumberOfSheets());
+		
+		Sheet sheet = workbook.getSheetAt(0);
+		DataFormatter dataFormatter = new DataFormatter();
+		Iterator<Row> rowIterator = sheet.rowIterator();
+		HashMap<List<Row>,List<String>> hashMap = new HashMap<>();
+		List<Row> rows = new ArrayList<>();
+		List<String> cells = new ArrayList<>();
+		while (rowIterator.hasNext()){
+			
+			Row row = rowIterator.next();
+			Iterator<Cell> cellIterator = row.cellIterator();
+			while (cellIterator.hasNext()) {
+				
+				Cell cell = cellIterator.next();
+                String cellValue = dataFormatter.formatCellValue(cell);
+                cells.add(cellValue);
+            }
+			rows.add(row);
+			hashMap.put(rows, cells);
+		}
+		for (Entry<List<Row>, List<String>> entry : hashMap.entrySet()) {
+		    System.out.println(entry.getKey() + ":" + entry.getValue().toString());
+		}
+	}
+
+}

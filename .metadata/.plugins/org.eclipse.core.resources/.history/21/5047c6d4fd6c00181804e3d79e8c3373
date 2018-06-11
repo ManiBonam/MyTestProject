@@ -1,0 +1,10 @@
+package com.mytest.sample;
+
+public class ReadFromExcel {
+	
+	public void readData(){
+		 String FILE_PATH = "S:\\DevSpace\\Test_Data\\personData.xlsx";
+		
+	}
+
+}

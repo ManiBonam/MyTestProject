@@ -1,0 +1,9 @@
+package com.mytest.sample;
+
+public class ReadFromExcel {
+	
+	public void readData(){
+		
+	}
+
+}

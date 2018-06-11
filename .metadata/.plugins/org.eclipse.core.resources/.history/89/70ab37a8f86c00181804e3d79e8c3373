@@ -1,0 +1,11 @@
+package com.mytest.app;
+
+public class Runner {
+
+	ReadFromExcel redFromExcel = new ReadFromExcel();
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

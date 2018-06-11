@@ -1,0 +1,5 @@
+package com.mytest.domain;
+
+public class EmploymentStatus {
+
+}

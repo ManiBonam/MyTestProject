@@ -1,0 +1,285 @@
+package com.mytest.sample;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mytest.domain.Address;
+import com.mytest.domain.EmploymentStatus;
+import com.mytest.domain.Participant;
+import com.mytest.domain.Person;
+
+public class ReadFromExcel {
+
+	String path;
+	XSSFWorkbook con;
+
+	public ReadFromExcel(String filepath) {
+
+		path = filepath;
+
+		con = this.getConnection();
+
+	}
+
+	private synchronized XSSFWorkbook getConnection() {
+		XSSFWorkbook wb = null;
+		try {
+			wb = new XSSFWorkbook(new FileInputStream(path));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return wb;
+	}
+
+	Person person = new Person();
+	Participant participant = new Participant();
+	Address address = new Address();
+	EmploymentStatus employmentStatus = new EmploymentStatus();
+
+	public HashMap<List<Row>, List<String>> readData()
+			throws EncryptedDocumentException, InvalidFormatException, IOException {
+		
+		Workbook workbook = WorkbookFactory.create(new File(path));
+		
+		Sheet sheet = workbook.getSheetAt(0);
+		DataFormatter dataFormatter = new DataFormatter();
+		Row row = sheet.getRow(1);
+		Iterator<Row> rowIterator = sheet.rowIterator();
+		Map<String, String> map = new HashMap<>();
+		HashMap<List<Row>, List<String>> hashMap = new HashMap<>();
+		List<Row> rows = new ArrayList<>();
+		List<String> cells = new ArrayList<>();
+		while (rowIterator.hasNext()) {
+			 rowIterator.next();
+			Iterator<Cell> cellIterator = row.cellIterator();
+			while (cellIterator.hasNext()) {
+
+				Cell cell = cellIterator.next();
+				String cellValue = dataFormatter.formatCellValue(cell);
+				cells.add(cellValue);
+			}
+			rows.add(row);
+			hashMap.put(rows, cells);
+		}
+		return hashMap;
+	}
+
+	public Person createPersonObject() throws EncryptedDocumentException, InvalidFormatException, IOException {
+		Map<List<Row>, List<String>> hashMap = new HashMap<>();
+		hashMap = readData();
+		/*Object participant1 = new Participant();
+		Object address = new Address();
+		Object employmentStatus = new EmploymentStatus();
+		
+
+		Field[] participantFields = participant1.getClass().getDeclaredFields();
+
+		List<String> actualFieldNames = getFieldNames(participantFields);
+		System.out.println(actualFieldNames);*/
+		Person person = new Person();
+		 for (Map.Entry<List<Row>, List<String>> entry : hashMap.entrySet()) {
+		
+			 person.getParticipant().setFirstName(entry.getValue().get(0));
+			 person.getParticipant().setLastName(entry.getValue().get(1));
+			 person.getParticipant().setMiddleName(entry.getValue().get(2));
+			 person.getParticipant().setWsid(Long.valueOf(entry.getValue().get(3)));
+			 person.getParticipant().setPersonid(Long.valueOf(entry.getValue().get(4)));
+			 person.getAddress().setAddressLine1(entry.getValue().get(5));
+			 person.getAddress().setAddressLine2(entry.getValue().get(6));
+			 person.getAddress().setCity(entry.getValue().get(7));
+			 person.getAddress().setCountry(entry.getValue().get(9));
+			 person.getAddress().setState(entry.getValue().get(8));
+			 person.getEmploymentStatus().setEmploymentStatus(entry.getValue().get(10));
+			 person.getEmploymentStatus().setEmploymentGrade(entry.getValue().get(11));
+			 person.getEmploymentStatus().setCompensation(Double.valueOf(entry.getValue().get(12)));
+		 
+		// System.out.println(entry.getKey() + ":" +
+		 //entry.getValue().toString()); 
+		 }
+		 return person;
+	}
+	
+	public void printValues() throws EncryptedDocumentException, InvalidFormatException, IOException{
+		ObjectMapper mapper = new ObjectMapper();
+		Person person1 = createPersonObject();
+		mapper.writeValue(new File("D:\\staff.json"), person1);
+		System.out.println(participant.getFirstName());
+	}
+
+	private static List<String> getFieldNames(Field[] fields) {
+		List<String> fieldNames = new ArrayList<>();
+		for (Field field : fields)
+			fieldNames.add(field.getName());
+		return fieldNames;
+	}
+
+	public synchronized Hashtable<String, String> getDataSetByRecordId(String iterationid, String sheetName, String columnName) {
+		Hashtable<String, String> colNameAndValue = new Hashtable<String, String>();
+		if (con == null) {
+			con = this.getConnection();
+		}
+		try {
+
+			//String sheetName = con.getSheet(sheetName);
+			//String dstColumnName = TestKeywords.COL_NAME_ITERATION_ID;
+			String dstColumnValue = iterationid;
+			List<String> columnNames = this.getTableColNames(sheetName);
+
+			int rowindex = this.getRowIndex(columnName, dstColumnValue, sheetName);
+			// System.out.println("Test Me >> "+rowindex);
+			XSSFSheet sheet = con.getSheet(sheetName);
+			XSSFRow irow = sheet.getRow(rowindex);
+			for (String colName : columnNames) {
+
+				int colIndex = this.getColumnIndex(colName, sheetName);
+
+				String colValue = this.getCellValue(irow.getCell(colIndex));
+				// System.out.println("ColName >> "+colName +"="+colValue+"
+				// ColIndex >> "+colIndex );
+				try {
+					colNameAndValue.put(colName, colValue);
+				} catch (Exception e) {
+					// TODO: handle exception
+					// e.printStackTrace();
+				}
+			}
+
+		} catch (Exception e) {
+
+		}
+		return colNameAndValue;
+	}
+
+	private synchronized int getRowIndex(String dstColumnName, String dstColumnValue, String sheetName) {
+		int retval = -1;
+		if (con == null) {
+			con = this.getConnection();
+		}
+		try {
+			int colIndex = this.getColumnIndex(dstColumnName, sheetName);
+			if (colIndex > -1) {
+				XSSFSheet sheet = con.getSheet(sheetName);
+				Iterator<Row> rows = sheet.rowIterator();
+				int counter = -1;
+				while (rows.hasNext()) {
+					counter++;
+					XSSFRow irow = (XSSFRow) rows.next();
+					if (irow.getRowNum() != 0) {
+						XSSFCell vcell = irow.getCell(colIndex);
+						String celvalue = this.getCellValue(vcell);
+						if (celvalue.equalsIgnoreCase(dstColumnValue)) {
+							retval = counter;
+							break;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		return retval;
+
+	}
+
+	private synchronized int getColumnIndex(String columnName, String sheetName) {
+		int retval = -1;
+		if (con == null) {
+			con = this.getConnection();
+		}
+		try {
+			XSSFSheet sheet = con.getSheet(sheetName);
+			XSSFRow colRow = sheet.getRow(0);
+			Iterator<Cell> cells = colRow.cellIterator();
+			int counter = -1;
+			while (cells.hasNext()) {
+
+				counter++;
+				XSSFCell cell = (XSSFCell) cells.next();
+				String celvalue = this.getCellValue(cell);
+				if (celvalue.equalsIgnoreCase(columnName)) {
+					retval = counter;
+					break;
+				}
+			}
+		} catch (Exception e) {
+
+		}
+
+		return retval;
+	}
+
+	private synchronized List<String> getTableColNames(String sheetName) {
+		List<String> retval = null;
+		if (con == null) {
+			con = this.getConnection();
+		}
+		try {
+			retval = new ArrayList<String>();
+			XSSFSheet sheet = con.getSheet(sheetName);
+			XSSFRow colRow = sheet.getRow(0);
+			Iterator<Cell> cells = colRow.cellIterator();
+			while (cells.hasNext()) {
+				XSSFCell cell = (XSSFCell) cells.next();
+				String cval = this.getCellValue(cell);
+				retval.add(cval);
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		return retval;
+	}
+
+	private synchronized String getCellValue(XSSFCell cell) {
+		String rval = "";
+		try {
+			rval = cell.getStringCellValue();
+		} catch (Exception e) {
+			try {
+				rval = String.valueOf(cell.getNumericCellValue());
+			} catch (Exception e2) {
+				try {
+					rval = String.valueOf(cell.getDateCellValue());
+				} catch (Exception e3) {
+
+				}
+			}
+		}
+		return rval;
+	}
+
+	public synchronized void doCloseCon() {
+		try {
+			con.close();
+			con = null;
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+
+}

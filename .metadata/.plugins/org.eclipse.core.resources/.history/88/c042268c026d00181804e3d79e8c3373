@@ -1,0 +1,14 @@
+package com.mytest.app;
+
+import com.mytest.sample.ReadFromExcel;
+
+public class Runner {
+
+	
+	public static void main(String[] args) {
+		ReadFromExcel readFromExcel = new ReadFromExcel();
+		readFromExcel.
+
+	}
+
+}

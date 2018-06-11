@@ -1,0 +1,12 @@
+package com.mytest.domain;
+
+public class Participant {
+	private String firstName;
+	private String LastName;
+	private String middleName;
+	private long wsid;
+	private long personid;
+	
+
+
+}
